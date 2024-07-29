@@ -23,7 +23,7 @@ pub const panic = zjb.panic;
 var glcontext : zjb.Handle = undefined;
 
 export fn main() void {
-    logStr("\n======================== Start calling WebGL functions to draw a blinking square   ========================");
+
 
     const canvas = zjb.global("document").call("getElementById", .{zjb.constString("canvas")}, zjb.Handle);
     defer canvas.release();
@@ -39,9 +39,11 @@ export fn main() void {
 
     const timestamp = timeline.get("currentTime", f64);
     last_timestamp_seconds = timestamp / 1000;
-    animationFrame(timestamp);
 
+    logStr("\n======================== Start the main render loop.  ========================");
+    animationFrame(timestamp);
 }
+
 fn animationFrame(timestamp: f64) callconv(.C) void {
 
     // NOTE: The timestamp is in milliseconds.
