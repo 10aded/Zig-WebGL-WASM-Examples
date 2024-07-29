@@ -3,9 +3,11 @@ const zjb = @import("zjb");
 
 const alloc = std.heap.wasm_allocator;
 
+const PI = std.math.pi;
+
 // Globals
 
-var last_timestamp : f64 = undefined;
+var last_timestamp_seconds : f64 = undefined;
 
 fn log(v: anytype) void {
     zjb.global("console").call("log", .{v}, void);
@@ -30,16 +32,21 @@ export fn main() void {
     canvas.set("height", 500);
     
     glcontext = canvas.call("getContext", .{zjb.constString("webgl")}, zjb.Handle);
-    defer glcontext.release();
+//    defer glcontext.release();
 
     const timeline = zjb.global("document").get("timeline", zjb.Handle);
     defer timeline.release();
 
-    last_timestamp = timeline.get("currentTime", f64);
-    render_frame(last_timestamp);
-}
+    const timestamp = timeline.get("currentTime", f64);
+    last_timestamp_seconds = timestamp / 1000;
+    animationFrame(timestamp);
 
-fn render_frame(timestamp: f64) callconv(.C) void {
+}
+fn animationFrame(timestamp: f64) callconv(.C) void {
+
+    // NOTE: The timestamp is in milliseconds.
+    const time_seconds = timestamp / 1000;
+    
     // Mozilla's WebGl documentation at:
     //
     //     https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Getting_started_with_WebGL
@@ -53,10 +60,10 @@ fn render_frame(timestamp: f64) callconv(.C) void {
     // project has the minimal amount of actual javascript code possible.
 
     // Change the color depending on timestamp.
-    const delta = timestamp - @floor(timestamp);
-    
-    glcontext.call("clearColor", .{delta,0.5,1,1}, void);
+    const oscillating_value = 0.5 * (1 + std.math.sin(2 * PI * time_seconds));
+
+    glcontext.call("clearColor", .{oscillating_value,0.5,1,1}, void);
     glcontext.call("clear", .{glcontext.get("COLOR_BUFFER_BIT", i32)}, void);    
 
-    zjb.ConstHandle.global.call("requestAnimationFrame", .{zjb.fnHandle("render_frame", render_frame)}, void);
+    zjb.ConstHandle.global.call("requestAnimationFrame", .{zjb.fnHandle("animationFrame", animationFrame)}, void);
 }
