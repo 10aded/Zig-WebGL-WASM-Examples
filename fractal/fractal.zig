@@ -1,9 +1,10 @@
 const std = @import("std");
 const zjb = @import("zjb");
-const alloc = std.heap.wasm_allocator;
 
 const vertex_shader_source   = @embedFile("vertex.glsl");
 const fragment_shader_source = @embedFile("fragment.glsl");
+
+const alloc = std.heap.wasm_allocator;
 
 fn log(v: anytype) void {
     zjb.global("console").call("log", .{v}, void);

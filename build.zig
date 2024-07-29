@@ -28,6 +28,39 @@ pub fn build(b: *std.Build) void {
     });
 
     /////////////////////////////////////////////////////////////
+    // Blinking Screen.
+    // TODO... concisely describe what this does.
+
+    const blinking = b.addExecutable(.{
+        .name = "blinking-screen",
+        .root_source_file = b.path("blinking-screen/blinking-screen.zig"),
+        .target = b.resolveTargetQuery(.{ .cpu_arch = .wasm32, .os_tag = .freestanding }),
+        .optimize = optimize,
+    });
+    blinking.root_module.addImport("zjb", module);
+    blinking.entry = .disabled;
+    blinking.rdynamic = true;
+
+    const extract_blinking = b.addRunArtifact(generate_js);
+    // const extract_blinking = b.addRunArtifact(zjb.artifact("generate_js"));
+    const extract_blinking_out = extract_blinking.addOutputFileArg("zjb_extract.js");
+    extract_blinking.addArg("Zjb"); // Name of js class.
+    extract_blinking.addArtifactArg(blinking);
+
+    const blinking_step = b.step("blinking", "build the Julia set example");
+    blinking_step.dependOn(&b.addInstallArtifact(blinking, .{
+        .dest_dir = .{ .override = dir },
+        }).step);
+    blinking_step.dependOn(&b.addInstallFileWithDir(extract_blinking_out, dir, "zjb_extract.js").step);
+    blinking_step.dependOn(&b.addInstallDirectory(.{
+        // TODO... make the index.html etc. that gets copied into every project from one place.
+        .source_dir = b.path("blinking-screen/static"),
+        .install_dir = dir,
+        .install_subdir = "",
+        }).step);
+
+
+    /////////////////////////////////////////////////////////////
     // Our fractal example.
 
     const fractal = b.addExecutable(.{
