@@ -95,6 +95,7 @@ fn init_shaders() void {
 
 fn animationFrame(timestamp: f64) callconv(.C) void {
 
+
     // NOTE: The timestamp is in milliseconds.
     const time_seconds = timestamp / 1000;
 
@@ -116,7 +117,7 @@ fn animationFrame(timestamp: f64) callconv(.C) void {
     
     const avpos_string = zjb.string("aVertexPosition");
     const vertex_position = glcontext.call("getAttribLocation", .{shader_program, avpos_string}, zjb.Handle);
-    log(vertex_position); // @debug
+//    log(vertex_position); // @debug
 
     const position_buffer = glcontext.call("createBuffer", .{}, zjb.Handle);
 
@@ -126,14 +127,14 @@ fn animationFrame(timestamp: f64) callconv(.C) void {
     // Now create an array of positions for the square.
     //        const positions = [1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0];
 
-//    const positions     = [_] f32{1, 1, -1, 1, 1, -1, -1, -1};
-    const positions     = [_] f32{0.9, 0.9, -0.9, 0.9, 0.9, -0.9, -0.9, -0.9};
+    const positions     = [_] f32{1, 1, -1, 1, 1, -1, -1, -1};
+
     const positions_obj = zjb.dataView(&positions);
     defer positions_obj.release();
 
     glcontext.call("bufferData", .{gl_ARRAY_BUFFER, positions_obj, gl_STATIC_DRAW}, void);
 
-    log(position_buffer);
+//    log(position_buffer);
 
     const oscillating_value = 0.5 * (1 + std.math.sin(2 * PI * time_seconds));
 
@@ -164,8 +165,15 @@ fn animationFrame(timestamp: f64) callconv(.C) void {
     // );
 
     glcontext.call("enableVertexAttribArray", .{vertex_position}, void);
-    glcontext.call("useProgram", .{shader_program}, void);
 
+    // Set the time uniform in fragment.glsl
+    const time_uniform_location = glcontext.call("getUniformLocation", .{shader_program, zjb.string("time")}, zjb.Handle);
+
+    const time_seconds_f32 : f32 = @floatCast(time_seconds);
+    glcontext.call("uniform1f", .{time_uniform_location, time_seconds_f32}, void);
+    
+    glcontext.call("useProgram", .{shader_program}, void);
+    
     const offset = 0;
     const vertexCount = 4;
 
