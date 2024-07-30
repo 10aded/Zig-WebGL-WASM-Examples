@@ -28,5 +28,5 @@ void main()
     float escp = log(float(escape_index)) / log(50.0);
     bool in_R = length(zn) <= 2.0;
     
-    gl_FragColor = float(in_R) * color1 + float(! in_R) * vec4(escp, 0, theta, 1);
+    gl_FragColor = float(in_R) * color1 + float(! in_R) * vec4(escp, 0, c.x, 1);
 }

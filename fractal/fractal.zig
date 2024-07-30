@@ -125,8 +125,6 @@ fn animationFrame(timestamp: f64) callconv(.C) void {
     glcontext.call("bindBuffer", .{gl_ARRAY_BUFFER, position_buffer}, void);
 
     // Now create an array of positions for the square.
-    //        const positions = [1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0];
-
     const positions     = [_] f32{1, 1, -1, 1, 1, -1, -1, -1};
 
     const positions_obj = zjb.dataView(&positions);

@@ -9,8 +9,5 @@ var zjb = new Zjb();
 	WebAssembly.instantiateStreaming(fetch("blinking-screen.wasm"), {env: env, zjb: zjb.imports}).then(function (results) {
 		zjb.instance = results.instance;
 		results.instance.exports.main();
-		console.log("calling zjb exports from javascript", zjb.exports.incrementAndGet(1));
-		console.log("calling zjb exports from javascript", zjb.exports.incrementAndGet(1));
-		console.log("calling zjb exports from javascript", zjb.exports.incrementAndGet(1));
 	});
 })();

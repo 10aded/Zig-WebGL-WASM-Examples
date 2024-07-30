@@ -1,3 +1,13 @@
+The collection of examples in this repo would not be possible without Scott Redig's repo zig-javascript-bridge, available at:
+
+https://github.com/scottredig/zig-javascript-bridge
+
+The zig-javascript-bridge repo is licensed with a MIT License, the text of which is below.
+
+*****************************************************************************
+zig-javascript-bridge license
+*****************************************************************************
+
 MIT License
 
 Copyright (c) Scott Redig
@@ -19,3 +29,5 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+*****************************************************************************
