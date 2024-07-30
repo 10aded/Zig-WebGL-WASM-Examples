@@ -24,6 +24,6 @@ A rectangle oscillates between pink and blue.
 
 ## [Julia Sets](./fractal)
 
-![Screenshot](./Gifs/fractal.mp4 "A browser windows displays a series Julia sets, a type of fractals, that sprial and gradually change color over time.")
+![Screenshot](./Gifs/fractal.gif "A browser windows displays a series Julia sets, a type of fractals, that sprial and gradually change color over time.")
 
 A continuous (kinda) series of Julia sets are rendered in a loop.
