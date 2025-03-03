@@ -1,0 +1,33 @@
+.{
+    .name = "port-sliding-puzzle-wasm",
+    .version = "1.0.0",
+    .minimum_zig_version = "0.13.0",
+
+    // NOTE: The following dependencies have been copied into
+    // the source code, for the moment.
+
+    .dependencies = .{
+
+        // Downloaded from:
+        // https://github.com/scottredig/zig-javascript-bridge
+
+        .zjb = .{
+                     .path = "./zjb-dependency",
+                     // .path = "./Dependencies/zjb", // BIZZARELY, the build system
+                     // failed to find this, it seems to want to look for something
+                     // with a path \..\../... on Windows
+        },
+    },
+    .paths = .{
+    "",
+        // "main.zig",
+        // "build.zig",
+        // "build.zig.zon",
+        // "README.md",
+        // "LICENCE",
+        // "preview.gif",
+        // "./Assets",
+        // "./Shaders",
+        // "./Dependencies"
+    },
+}

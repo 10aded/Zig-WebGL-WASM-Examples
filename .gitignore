@@ -1,6 +1,3 @@
-.zig-cache/
-zig-out/
-host.exe
+*.zig-cache*
+*zig-out*
 *~
-.#*
-*#
