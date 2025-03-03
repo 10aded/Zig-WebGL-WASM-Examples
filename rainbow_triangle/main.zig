@@ -219,7 +219,7 @@ fn animationFrame(timestamp: f64) callconv(.C) void {
     const time_seconds = timestamp / 1000;
     
     // Render the background color.
-    glcontext.call("clearColor", .{0.2, 0.2, 1.0, 1}, void);
+    glcontext.call("clearColor", .{0.2, 0.2, 0.2, 1}, void);
     glcontext.call("clear",      .{gl_COLOR_BUFFER_BIT}, void);
 
     // Render the rainbow triangle.

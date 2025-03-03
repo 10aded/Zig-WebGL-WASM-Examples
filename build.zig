@@ -26,13 +26,19 @@ pub fn build(b: *std.Build) void {
   //  const changing_fractal = b.addExecutable(make_wasm_build_exe_options(b, "changing_fractal"));
     const rainbow_triangle = b.addExecutable(make_wasm_build_exe_options(b, "rainbow_triangle"));
 
-    // TODO... make a loop.
+
+    // Add zjb to the exes, set entry options etc.
+    const exe_list = [_] * std.Build.Step.Compile {
+        //..
+        //..
+        rainbow_triangle,
+    };
     
-    rainbow_triangle.root_module.addImport("zjb", zjb.module("zjb"));
-    rainbow_triangle.entry = .disabled;
-    rainbow_triangle.rdynamic = true;
-
-
+    for (exe_list) |exe| {
+        exe.root_module.addImport("zjb", zjb.module("zjb"));
+        exe.entry = .disabled;
+        exe.rdynamic = true;
+    }
     
     const extract_rainbow_triangle = b.addRunArtifact(zjb.artifact("generate_js"));
     const extract_rainbow_triangle_out = extract_rainbow_triangle.addOutputFileArg("zjb_extract.js");
