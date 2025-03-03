@@ -2,35 +2,36 @@
 
 const std = @import("std");
 
-comptime {
-    @compileLog("Hello!")
+fn make_wasm_build_exe_options( b : *std.Build, comptime example_name : [] const u8) std.Build.ExecutableOptions {
+    const exe_options : std.Build.ExecutableOptions = .{
+        .name = example_name,
+        .root_source_file = b.path(example_name ++ "/main.zig"),
+        .target = b.resolveTargetQuery(.{ .cpu_arch = .wasm32, .os_tag = .freestanding }),
+        .optimize = b.standardOptimizeOption(.{}),
+    };
+    return exe_options;
 }
 
 pub fn build(b: *std.Build) void {
-    // Build options from the command line.
-    const optimize = b.standardOptimizeOption(.{});
-
     // Dependencies from build.zig.zon .
     const zjb = b.dependency("zjb", .{});    
 
-
-    // Output directory names.
-    // TODO... others
+    // Define example output directories.
+    // const blinking_screen_dir  : std.Build.InstallDir = .{ .custom = "blinking_screen"  };
+    // const changing_fractal_dir          : std.Build.InstallDir = .{ .custom = "changing_fractal"          };
     const rainbow_triangle_dir : std.Build.InstallDir = .{ .custom = "rainbow_triangle" };
 
+    // Create build options for the .wasms
+//    const blinking_screen  = b.addExecutable(make_wasm_build_exe_options(b, "blinking_screen"));
+  //  const changing_fractal = b.addExecutable(make_wasm_build_exe_options(b, "changing_fractal"));
+    const rainbow_triangle = b.addExecutable(make_wasm_build_exe_options(b, "rainbow_triangle"));
 
-    // .wasm build options.
-    // TODO... others
-    const rainbow_triangle = b.addExecutable(.{
-        .name = "rainbow_triangle",
-        .root_source_file = b.path("rainbow_triangle/main.zig"),
-        .target = b.resolveTargetQuery(.{ .cpu_arch = .wasm32, .os_tag = .freestanding }),
-        .optimize = optimize,
-    });
+    // TODO... make a loop.
     
     rainbow_triangle.root_module.addImport("zjb", zjb.module("zjb"));
     rainbow_triangle.entry = .disabled;
     rainbow_triangle.rdynamic = true;
+
 
     
     const extract_rainbow_triangle = b.addRunArtifact(zjb.artifact("generate_js"));
