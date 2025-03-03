@@ -65,16 +65,18 @@ pub fn build(b: *std.Build) void {
     // ..
     const rainbow_triangle_step = b.step("rainbow_triangle", "Build the hello Zig example");
 
-    
-    
-    rainbow_triangle_step.dependOn(&b.addInstallArtifact(exe_list[0], .{
-        .dest_dir = .{.override = output_dirs[0]},
-        }).step);
-    
-    rainbow_triangle_step.dependOn(&b.addInstallFileWithDir(generated_js_paths[0], output_dirs[0], "zjb_extract.js").step);
-    rainbow_triangle_step.dependOn(&b.addInstallDirectory(.{
-        .source_dir = static_website_dirs[0],
-        .install_dir = output_dirs[0],
-        .install_subdir = "",
-    }).step);
+    const build_steps : [1] *std.Build.Step= .{
+        rainbow_triangle_step,
+    };
+
+    for (build_steps, exe_list, output_dirs, generated_js_paths, static_website_dirs) |step, exe, output_dir, js_path, static_website_dir| {
+
+        step.dependOn(&b.addInstallArtifact(exe, .{.dest_dir = .{.override = output_dir}}).step);
+        step.dependOn(&b.addInstallFileWithDir(js_path, output_dir, "zjb_extract.js").step);
+        step.dependOn(&b.addInstallDirectory(.{
+            .source_dir  = static_website_dir,
+            .install_dir = output_dir,
+            .install_subdir = "",
+            }).step);
+    }
 }
