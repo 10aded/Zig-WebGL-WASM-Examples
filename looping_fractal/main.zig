@@ -230,7 +230,7 @@ fn animationFrame(timestamp: f64) callconv(.C) void {
     glcontext.call("uniform1f", .{time_uniform_location, time_seconds_f32}, void);
     
     // The Actual Drawing command!
-    glcontext.call("drawArrays", .{gl_TRIANGLES, 0, 3}, void);
+    glcontext.call("drawArrays", .{gl_TRIANGLES, 0, 6}, void);
 
     zjb.ConstHandle.global.call("requestAnimationFrame", .{zjb.fnHandle("animationFrame", animationFrame)}, void);
 }
