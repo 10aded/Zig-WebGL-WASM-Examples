@@ -21,24 +21,25 @@ pub fn build(b: *std.Build) void {
     // Define example output directories.
     const output_dirs = [_] std.Build.InstallDir {
         .{ .custom = "blinking_screen"  },
+        .{ .custom = "looping_fractal"  },
         .{ .custom = "rainbow_triangle" },
     };
 
     const static_website_dirs = [_] std.Build.LazyPath {
         b.path("blinking_screen/static"),
+        b.path("looping_fractal/static"),
         b.path("rainbow_triangle/static"),
     };
     
     // Create build options for the .wasms
     const blinking_screen  = b.addExecutable(make_wasm_build_exe_options(b, "blinking_screen", optimize));
-  //  const changing_fractal = b.addExecutable(make_wasm_build_exe_options(b, "changing_fractal"));
+    const looping_fractal  = b.addExecutable(make_wasm_build_exe_options(b, "looping_fractal", optimize));
     const rainbow_triangle = b.addExecutable(make_wasm_build_exe_options(b, "rainbow_triangle", optimize));
-
 
     // Add zjb to the exes, set entry options etc.
     const exe_list = [_] * std.Build.Step.Compile {
         blinking_screen,
-        //..
+        looping_fractal,
         rainbow_triangle,
     };
     
@@ -61,12 +62,13 @@ pub fn build(b: *std.Build) void {
         generate_js_exe.addArtifactArg(exe); // Currently NO documentation in Run.zig as to what this does.
     }
 
-    const blinking_screen_step  = b.step("blinking_screen", "Build the hello Zig example");
-    // ..
-    const rainbow_triangle_step = b.step("rainbow_triangle", "Build the hello Zig example");
+    const blinking_screen_step  = b.step("blinking_screen",  "Build the blinking_screen example.");
+    const looping_fractal_step  = b.step("looping_fractal",  "Build the looping_fractal example.");
+    const rainbow_triangle_step = b.step("rainbow_triangle", "Build the rainbow_triangle example.");
 
-    const build_steps : [2] *std.Build.Step= .{
+    const build_steps : [3] *std.Build.Step= .{
         blinking_screen_step,
+        looping_fractal_step,
         rainbow_triangle_step,
     };
 
