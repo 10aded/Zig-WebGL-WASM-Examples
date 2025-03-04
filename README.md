@@ -6,7 +6,7 @@ Note: The actual examples look significantly better than the `.gifs` below... th
 
 ## Building the examples
 
-Building things in Zig is almost trivial with a `zig.build` and `zig.build.zon` file (and this project has both):
+Building things in Zig is almost trivial with a `build.zig` and `build.zig.zon` file (and this project has both):
 
 To compile a project, simply run `zig build <PROJECT> -Doptimize=ReleaseFast` where `<PROJECT>` is one of the following:
 - `blinking_screen`
@@ -17,7 +17,7 @@ and `zig` is the Zig `0.13.0` compiler, freely available at: https://ziglang.org
 
 ### Example
 
-To build the fractal example below, first call `zig build looping_fractal -Doptimize=ReleaseFast` . Files will get created in `zig-out/looping_fractal`. Navigate to `zig-out/looping_fractal`, and host a web server from there. (E.g, via `python -m http.server`, then open a browser with url `localhost:8000`.)
+To build the fractal example below, first call `zig build looping_fractal -Doptimize=ReleaseFast` . Files will get created in `zig-out/looping_fractal`. Navigate to `zig-out/looping_fractal`, and host a web server from there. (E.g. via `python -m http.server`, then open a browser with url `localhost:8000`)
 
 ## [Blinking Screen](./blinking_screen)
 
