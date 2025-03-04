@@ -2,12 +2,12 @@
 
 const std = @import("std");
 
-fn make_wasm_build_exe_options( b : *std.Build, comptime example_name : [] const u8) std.Build.ExecutableOptions {
+fn make_wasm_build_exe_options( b : *std.Build, comptime example_name : [] const u8, optimize : std.builtin.OptimizeMode ) std.Build.ExecutableOptions {
     const exe_options : std.Build.ExecutableOptions = .{
         .name = example_name,
         .root_source_file = b.path(example_name ++ "/main.zig"),
         .target = b.resolveTargetQuery(.{ .cpu_arch = .wasm32, .os_tag = .freestanding }),
-        .optimize = b.standardOptimizeOption(.{}),
+        .optimize = optimize, 
     };
     return exe_options;
 }
@@ -16,28 +16,28 @@ pub fn build(b: *std.Build) void {
     // Dependencies from build.zig.zon .
     const zjb = b.dependency("zjb", .{});    
 
+    const optimize : std.builtin.OptimizeMode = b.standardOptimizeOption(.{});
+    
     // Define example output directories.
-    // const blinking_screen_dir  : std.Build.InstallDir = .{ .custom = "blinking_screen"  };
-    // const changing_fractal_dir          : std.Build.InstallDir = .{ .custom = "changing_fractal"          };
-    //const rainbow_triangle_dir : std.Build.InstallDir = .{ .custom = "rainbow_triangle" };
-
     const output_dirs = [_] std.Build.InstallDir {
+        .{ .custom = "blinking_screen"  },
         .{ .custom = "rainbow_triangle" },
     };
 
     const static_website_dirs = [_] std.Build.LazyPath {
+        b.path("blinking_screen/static"),
         b.path("rainbow_triangle/static"),
     };
     
     // Create build options for the .wasms
-//    const blinking_screen  = b.addExecutable(make_wasm_build_exe_options(b, "blinking_screen"));
+    const blinking_screen  = b.addExecutable(make_wasm_build_exe_options(b, "blinking_screen", optimize));
   //  const changing_fractal = b.addExecutable(make_wasm_build_exe_options(b, "changing_fractal"));
-    const rainbow_triangle = b.addExecutable(make_wasm_build_exe_options(b, "rainbow_triangle"));
+    const rainbow_triangle = b.addExecutable(make_wasm_build_exe_options(b, "rainbow_triangle", optimize));
 
 
     // Add zjb to the exes, set entry options etc.
     const exe_list = [_] * std.Build.Step.Compile {
-        //..
+        blinking_screen,
         //..
         rainbow_triangle,
     };
@@ -61,11 +61,12 @@ pub fn build(b: *std.Build) void {
         generate_js_exe.addArtifactArg(exe); // Currently NO documentation in Run.zig as to what this does.
     }
 
-    // ..
+    const blinking_screen_step  = b.step("blinking_screen", "Build the hello Zig example");
     // ..
     const rainbow_triangle_step = b.step("rainbow_triangle", "Build the hello Zig example");
 
-    const build_steps : [1] *std.Build.Step= .{
+    const build_steps : [2] *std.Build.Step= .{
+        blinking_screen_step,
         rainbow_triangle_step,
     };
 
