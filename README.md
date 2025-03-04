@@ -21,18 +21,18 @@ To build the fractal example below, first call `zig build looping_fractal` -Dopt
 
 ## [Blinking Screen](./blinking_screen)
 
-![Screenshot](./Gifs/blinking_screen.gif "A browser windows displays a rectangle that oscillates between pink and blue.")
+![Screenshot](./Gifs-Readme/blinking_screen.gif "A browser windows displays a rectangle that oscillates between pink and blue.")
 
 A rectangle oscillates between pink and blue.
 
 ## [Looping Fractal](./looping_fractal)
 
-![Screenshot](./Gifs/looping_fractal.gif "A browser windows displays a series Julia sets, a type of fractals, that sprial and gradually change color over time.")
+![Screenshot](./Gifs-Readme/looping_fractal.gif "A browser windows displays a series Julia sets, a type of fractals, that sprial and gradually change color over time.")
 
 A continuous (kinda) series of Julia sets are rendered in a loop.
 
 ## [Rainbow Triangle](./rainbow_triangle)
 
-![Screenshot](./Gifs/rainbow_triangle.gif "A browser windows displays a rainbow triangle that rotates over time.")
+![Screenshot](./Gifs-Readme/rainbow_triangle.gif "A browser windows displays a rainbow triangle that rotates over time.")
 
 A rainbow triangle rotates over time.
