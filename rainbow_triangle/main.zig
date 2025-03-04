@@ -174,7 +174,7 @@ fn compile_shaders() void {
     const shader_linked_ok = glcontext.call("getProgramParameter", .{color_vertex_shader_program, gl_LINK_STATUS}, bool);
 
     if (shader_linked_ok) {
-        logStr("Shader linked successfully!");
+        logStr("Debug: Shader linked successfully!");
     } else {
         logStr("ERROR: Shader failed to link!");
     }
