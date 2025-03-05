@@ -63,7 +63,8 @@ const Color = @Vector(4, u8);
 // Globals
 var glcontext      : zjb.Handle = undefined;
 var triangle_vbo   : zjb.Handle = undefined;
-var color_vertex_shader_program : zjb.Handle = undefined;
+var texture_shader_program : zjb.Handle = undefined;
+var pluto_texture  : zjb.Handle = undefined;
 
 // WebGL constants obtained from the WebGL specification at:
 // https://registry.khronos.org/webgl/specs/1.0.0/
@@ -75,9 +76,24 @@ const gl_TRIANGLES        : i32 = 0x0004;
 
 const gl_VERTEX_SHADER    : i32 = 0x8B31;
 const gl_FRAGMENT_SHADER  : i32 = 0x8B30;
-
 const gl_COMPILE_STATUS   : i32 = 0x8B81;
 const gl_LINK_STATUS      : i32 = 0x8B82;
+
+const gl_TEXTURE_2D         : i32 = 0x0DE1;
+const gl_TEXTURE_WRAP_S     : i32 = 0x2802;
+const gl_TEXTURE_WRAP_T     : i32 = 0x2803;
+const gl_CLAMP_TO_EDGE      : i32 = 0x812F;
+const gl_TEXTURE_MAG_FILTER : i32 = 0x2800;
+const gl_TEXTURE_MIN_FILTER : i32 = 0x2801;
+const gl_NEAREST            : i32 = 0x2600;
+
+const gl_RGBA               : i32 = 0x1908;
+const gl_UNSIGNED_BYTE      : i32 = 0x1401; // NOTE: This line
+// possible @bug
+// in WebGL specification is commented out in /* PixelType */ !!!
+// BUT, UNSIGNED_BYTE is defined as another constant in /* DataType */
+// ... so we're using the /* Datatype... for now. */
+    
 
 // Timestamp
 var initial_timestamp      : f64 = undefined;
@@ -127,8 +143,8 @@ fn init_clock() void {
 
 fn decompress_image() void {
     qoi.qoi_to_pixels(pluto_qoi, pluto_width * pluto_height, &pluto_pixel_bytes);
-    log(@as(i32, @intCast(pluto_width)));
-    log(@as(i32, @intCast(pluto_height)));
+    // log(@as(i32, @intCast(pluto_width)));
+    // log(@as(i32, @intCast(pluto_height)));
 }
 
 fn init_webgl_context() void {
@@ -163,6 +179,8 @@ fn compile_shaders() void {
         logStr("ERROR: vertex shader failed to compile!");
         const info_log : zjb.Handle = glcontext.call("getShaderInfoLog", .{vertex_shader}, zjb.Handle);
         log(info_log);
+    } else {
+        logStr("Debug: vertex shader successfully compiled!");        
     }
     
     if (! fs_comp_ok) {
@@ -172,21 +190,21 @@ fn compile_shaders() void {
     }
     
     // Try and link the vertex and fragment shaders.
-    color_vertex_shader_program = glcontext.call("createProgram", .{}, zjb.Handle);
-    glcontext.call("attachShader", .{color_vertex_shader_program, vertex_shader},   void);
-    glcontext.call("attachShader", .{color_vertex_shader_program, fragment_shader}, void);
+    texture_shader_program = glcontext.call("createProgram", .{}, zjb.Handle);
+    glcontext.call("attachShader", .{texture_shader_program, vertex_shader},   void);
+    glcontext.call("attachShader", .{texture_shader_program, fragment_shader}, void);
 
     // NOTE: Before we link the program, we need to manually choose the locations
     // for the vertex attributes, otherwise the linker chooses for us. See, e.g:
     // https://webglfundamentals.org/webgl/lessons/webgl-attributes.html
 
-    glcontext.call("bindAttribLocation", .{color_vertex_shader_program, 0, zjb.constString("aPos")}, void);
-    glcontext.call("bindAttribLocation", .{color_vertex_shader_program, 1, zjb.constString("aTexCoord")}, void);
+    glcontext.call("bindAttribLocation", .{texture_shader_program, 0, zjb.constString("aPos")}, void);
+    glcontext.call("bindAttribLocation", .{texture_shader_program, 1, zjb.constString("aTexCoord")}, void);
 
-    glcontext.call("linkProgram",  .{color_vertex_shader_program}, void);
+    glcontext.call("linkProgram",  .{texture_shader_program}, void);
 
     // Check that the shaders linked.
-    const shader_linked_ok = glcontext.call("getProgramParameter", .{color_vertex_shader_program, gl_LINK_STATUS}, bool);
+    const shader_linked_ok = glcontext.call("getProgramParameter", .{texture_shader_program, gl_LINK_STATUS}, bool);
 
     if (shader_linked_ok) {
         logStr("Debug: Shader linked successfully!");
@@ -199,11 +217,11 @@ fn setup_array_buffers() void {
     // Define an equilateral RGB triangle.
         const triangle_gpu_data : [6 * 4] f32 = .{
             // xpos, ypos, xtex, ytex,
-             1,  1,  1, 1,// RT
-            -1,  1,  0, 1,// LT
-             1, -1,  1, 0,// RB
-            -1,  1,  0, 1,// LT
-             1, -1,  1, 0,// RB
+             1,  1,  480, 480,// RT
+            -1,  1,  0, 480,// LT
+             1, -1,  480, 0,// RB
+            -1,  1,  0, 480,// LT
+             1, -1,  480, 0,// RB
             -1, -1,  0, 0,// LB
     };
     
@@ -223,12 +241,39 @@ fn setup_array_buffers() void {
         2,                // number of components
         gl_FLOAT,         // type
         false,            // normalize
-        5 * @sizeOf(f32), // stride
+        4 * @sizeOf(f32), // stride
         0 * @sizeOf(f32), // offset
         }, void);
 
     glcontext.call("enableVertexAttribArray", .{1}, void);
-    glcontext.call("vertexAttribPointer", .{1, 3, gl_FLOAT, false, 5 * @sizeOf(f32), 2 * @sizeOf(f32)}, void);
+    glcontext.call("vertexAttribPointer", .{1, 2, gl_FLOAT, false, 4 * @sizeOf(f32), 2 * @sizeOf(f32)}, void);
+
+    // Setup pluto texture.
+    pluto_texture = glcontext.call("createTexture", .{}, zjb.Handle);
+    //    gl.genTextures(1, &pluto_texture);     // sliding_puzzle.zig
+
+    glcontext.call("bindTexture", .{gl_TEXTURE_2D, pluto_texture}, void);
+    //    gl.bindTexture(gl.TEXTURE_2D, pluto_texture);
+
+    // NOTE: The WebGL specification does NOT define CLAMP_TO_BORDER... weird.
+    glcontext.call("texParameteri", .{gl_TEXTURE_2D, gl_TEXTURE_WRAP_S, gl_CLAMP_TO_EDGE}, void);
+    glcontext.call("texParameteri", .{gl_TEXTURE_2D, gl_TEXTURE_WRAP_T, gl_CLAMP_TO_EDGE}, void);
+    glcontext.call("texParameteri", .{gl_TEXTURE_2D, gl_TEXTURE_MIN_FILTER, gl_NEAREST}, void);
+    glcontext.call("texParameteri", .{gl_TEXTURE_2D, gl_TEXTURE_MAG_FILTER, gl_NEAREST}, void);
+        
+    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_BORDER);
+    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_BORDER);
+    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+    // Note: The width and height have type "GLsizei"... i.e. a i32.
+    const bm_width  : i32 = @intCast(pluto_width);
+    const bm_height : i32 = @intCast(pluto_height);
+
+    const pixel_data_obj = zjb.dataView(&pluto_pixel_bytes);
+    glcontext.call("texImage2D", .{gl_TEXTURE_2D, 0, gl_RGBA, bm_width, bm_height, 0, gl_RGBA, gl_UNSIGNED_BYTE, pixel_data_obj}, void);
+    
+    //    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, bm_width, bm_height, 0, gl.RGBA, gl.UNSIGNED_BYTE, &pluto_pixel_bytes[0]);
 }
 
 fn animationFrame(timestamp: f64) callconv(.C) void {
@@ -241,15 +286,15 @@ fn animationFrame(timestamp: f64) callconv(.C) void {
     glcontext.call("clear",      .{gl_COLOR_BUFFER_BIT}, void);
 
     // Render the rainbow triangle.
-    glcontext.call("useProgram", .{color_vertex_shader_program}, void);
+    glcontext.call("useProgram", .{texture_shader_program}, void);
 
     // Set the time uniform in the fragment shader.
     const time_seconds_f32 : f32 = @floatCast(time_seconds);
-    const time_uniform_location = glcontext.call("getUniformLocation", .{color_vertex_shader_program, zjb.constString("time")}, zjb.Handle);
+    const time_uniform_location = glcontext.call("getUniformLocation", .{texture_shader_program, zjb.constString("time")}, zjb.Handle);
     glcontext.call("uniform1f", .{time_uniform_location, time_seconds_f32}, void);
     
     // The Actual Drawing command!
-    glcontext.call("drawArrays", .{gl_TRIANGLES, 0, 3}, void);
+    glcontext.call("drawArrays", .{gl_TRIANGLES, 0, 6}, void);
 
     zjb.ConstHandle.global.call("requestAnimationFrame", .{zjb.fnHandle("animationFrame", animationFrame)}, void);
 }

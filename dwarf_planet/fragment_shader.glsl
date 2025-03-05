@@ -2,13 +2,20 @@
 // Version above obtained by looking at the table at:
 // https://en.wikipedia.org/w/index.php?title=OpenGL_Shading_Language&oldid=1270723503
 
-varying vec2 TexCoord;
+varying highp vec2 TexCoord;
 
-uniform sampler2D texture0;
-
-precision mediump float;
+uniform sampler2D uSampler;
 
 void main() {
-  vec4 texture_color = texture(texture0, TexCoord);
+  highp vec4 texture_color = texture2D(uSampler, TexCoord);
   gl_FragColor = texture_color;
 }
+
+
+// varying highp vec2 vTextureCoord;
+
+//     uniform sampler2D uSampler;
+
+//     void main(void) {
+//       gl_FragColor = texture2D(uSampler, vTextureCoord);
+//     }

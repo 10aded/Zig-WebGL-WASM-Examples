@@ -10,6 +10,7 @@ varying   vec2 TexCoord;
 
 //uniform float time;
 
+void main() {
   gl_Position = vec4(aPos, 0, 1);
   TexCoord = aTexCoord;
 }
