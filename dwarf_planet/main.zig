@@ -89,12 +89,10 @@ const gl_TEXTURE_MIN_FILTER : i32 = 0x2801;
 const gl_NEAREST            : i32 = 0x2600;
 
 const gl_RGBA               : i32 = 0x1908;
-const gl_UNSIGNED_BYTE      : i32 = 0x1401; // NOTE: This line
-// possible @bug
-// in WebGL specification is commented out in /* PixelType */ !!!
-// BUT, UNSIGNED_BYTE is defined as another constant in /* DataType */
-// ... so we're using the /* Datatype... for now. */
-    
+const gl_UNSIGNED_BYTE      : i32 = 0x1401; // NOTE below!
+
+// NOTE: in WebGL specification,  UNSIGNED_BYTE is commented out in
+// /* PixelType */, the constant still seems to work though.
 
 // Timestamp
 var initial_timestamp      : f64 = undefined;
@@ -103,11 +101,20 @@ var initial_timestamp      : f64 = undefined;
 
 // The photo of Pluto below was taken by the New Horizons spacecraft,
 // see the header of this file for more information.
-//const pluto_qoi = @embedFile("./pluto_new_horizons.qoi");
-const pluto_qoi = @embedFile("./RRRB.qoi");
+const pluto_qoi = @embedFile("./pluto_new_horizons.qoi");
 const pluto_header = qoi.comptime_header_parser(pluto_qoi);
 const pluto_width  = pluto_header.image_width;
 const pluto_height = pluto_header.image_height;
+
+// TODO: In order to call gl.texImage2D to make a texture,
+// the bytes need to be in a Uint8Array (when gl.UNSIGNED_BYTE) is
+// called. (See: https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texImage2D)
+// So, without knowing if the WASM will store @Vector(4, u8) in the
+// packed way as in x86_64, here were first decompress the .qoi
+// into an array of @Vector(4, u8), then convert it to a [] u8.
+// It would be EASY to modify the qoi decompressor to directly
+// convert it to [] u8 but this is what we're doing for now!
+
 var pluto_pixels : [pluto_width * pluto_height] Color = undefined;
 var pluto_pixel_bytes : [4 * pluto_width * pluto_height] u8 = undefined;
 
@@ -146,9 +153,6 @@ fn init_clock() void {
 
 fn decompress_image() void {
     qoi.qoi_to_pixels(pluto_qoi, pluto_width * pluto_height, &pluto_pixels);
-    // @temp, @test...
-    // The wasm may treat [] Vector(4, u8) differently to a [] u8...
-    // so make a [] u8 instead!
 
     for (pluto_pixels, 0..) |pixel, i| {
         pluto_pixel_bytes[4 * i + 0] = pixel[0];
@@ -228,18 +232,12 @@ fn setup_array_buffers() void {
     // Define an equilateral RGB triangle.
         const triangle_gpu_data : [6 * 4] f32 = .{
             // xpos, ypos, xtex, ytex,
-             1,  1,  1, 1,// RT
-            -1,  1,  0, 1,// LT
-             1, -1,  1, 0,// RB
-            -1,  1,  0, 1,// LT
-             1, -1,  1, 0,// RB
-            -1, -1,  0, 0,// LB
-            // 1,  1,  480, 480,// RT
-            // -1,  1,  0, 480,// LT
-            // 1, -1,  480, 0,// RB
-            // -1,  1,  0, 480,// LT
-            // 1, -1,  480, 0,// RB
-            // -1, -1,  0, 0,// LB
+             1,  1,  1, 0,// RT
+            -1,  1,  0, 0,// LT
+             1, -1,  1, 1,// RB
+            -1,  1,  0, 0,// LT
+             1, -1,  1, 1,// RB
+            -1, -1,  0, 1,// LB
     };
     
     const gpu_data_obj = zjb.dataView(&triangle_gpu_data);
@@ -267,10 +265,7 @@ fn setup_array_buffers() void {
 
     // Setup pluto texture.
     pluto_texture = glcontext.call("createTexture", .{}, zjb.Handle);
-    //    gl.genTextures(1, &pluto_texture);     // sliding_puzzle.zig
-
     glcontext.call("bindTexture", .{gl_TEXTURE_2D, pluto_texture}, void);
-    //    gl.bindTexture(gl.TEXTURE_2D, pluto_texture);
 
     // NOTE: The WebGL specification does NOT define CLAMP_TO_BORDER... weird.
     glcontext.call("texParameteri", .{gl_TEXTURE_2D, gl_TEXTURE_WRAP_S, gl_CLAMP_TO_EDGE}, void);
@@ -278,24 +273,20 @@ fn setup_array_buffers() void {
     glcontext.call("texParameteri", .{gl_TEXTURE_2D, gl_TEXTURE_MIN_FILTER, gl_NEAREST}, void);
     glcontext.call("texParameteri", .{gl_TEXTURE_2D, gl_TEXTURE_MAG_FILTER, gl_NEAREST}, void);
         
-    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_BORDER);
-    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_BORDER);
-    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-
     // Note: The width and height have type "GLsizei"... i.e. a i32.
     const bm_width  : i32 = @intCast(pluto_width);
     const bm_height : i32 = @intCast(pluto_height);
 
-    // THIS LINE (seems) to cause a fail:
-    // const pixel_data_obj = zjb.dataView(&pluto_pixel_bytes);
-
+    // !!! VERY IMPORTANT !!!
+    // gl.texImage2D accepts a pixel source ONLY with type "Uint8Array". As such,
+    // applying a zjb.dataView() to the pixels will result in NO texture being drawn.
+    // Instead, use zjb.u8ArrayView().
+    //
+    // We spent something like 2 hours debugging this. Worst debugging experience of 2025 so far.
+    
     const pixel_data_obj = zjb.u8ArrayView(&pluto_pixel_bytes);
     
-    // log(@as(i32, @intCast(pluto_pixel_bytes[0]))); //@debug
     glcontext.call("texImage2D", .{gl_TEXTURE_2D, 0, gl_RGBA, bm_width, bm_height, 0, gl_RGBA, gl_UNSIGNED_BYTE, pixel_data_obj}, void);
-    
-    //    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, bm_width, bm_height, 0, gl.RGBA, gl.UNSIGNED_BYTE, &pluto_pixels[0]);
 }
 
 fn animationFrame(timestamp: f64) callconv(.C) void {
