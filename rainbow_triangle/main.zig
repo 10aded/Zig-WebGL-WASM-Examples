@@ -26,7 +26,7 @@
 //
 // The entire source code of this project is available on GitHub at:
 //
-// TODO...
+//     https://github.com/10aded/Zig-WebGL-WASM-Examples
 //
 // This code heavily relies on Scott Redig's Zig Javascript
 // Bridge library (zjb), available at:
@@ -53,19 +53,19 @@ var glcontext      : zjb.Handle = undefined;
 var triangle_vbo   : zjb.Handle = undefined;
 var color_vertex_shader_program : zjb.Handle = undefined;
 
-// GL constants... but because this is web "programming"
-// we cannot just embed these constants into the .wasm
-// but need to query them at runtime.
-var gl_FLOAT            : i32 = undefined;
-var gl_ARRAY_BUFFER     : i32 = undefined;
-var gl_STATIC_DRAW      : i32 = undefined;
-var gl_COLOR_BUFFER_BIT : i32 = undefined;
-var gl_TRIANGLES        : i32 = undefined;
+// WebGL constants obtained from the WebGL specification at:
+// https://registry.khronos.org/webgl/specs/1.0.0/
+const gl_FLOAT            : i32 = 0x1406; 
+const gl_ARRAY_BUFFER     : i32 = 0x8892;
+const gl_STATIC_DRAW      : i32 = 0x88E4;
+const gl_COLOR_BUFFER_BIT : i32 = 0x4000;
+const gl_TRIANGLES        : i32 = 0x0004;
 
-var gl_VERTEX_SHADER    : i32 = undefined;
-var gl_FRAGMENT_SHADER  : i32 = undefined;
-var gl_COMPILE_STATUS   : i32 = undefined;
-var gl_LINK_STATUS      : i32 = undefined;
+const gl_VERTEX_SHADER    : i32 = 0x8B31;
+const gl_FRAGMENT_SHADER  : i32 = 0x8B30;
+
+const gl_COMPILE_STATUS   : i32 = 0x8B81;
+const gl_LINK_STATUS      : i32 = 0x8B82;
 
 // Timestamp
 var initial_timestamp      : f64 = undefined;
@@ -84,8 +84,6 @@ export fn main() void {
     init_clock();
 
     init_webgl_context();
-
-    get_gl_constants();
 
     compile_shaders();
 
@@ -111,19 +109,6 @@ fn init_webgl_context() void {
     canvas.set("height", CANVAS_HEIGHT);
     
     glcontext = canvas.call("getContext", .{zjb.constString("webgl")}, zjb.Handle);
-}
-
-fn get_gl_constants() void {
-    gl_FLOAT            = glcontext.get("FLOAT",            i32);
-    gl_ARRAY_BUFFER     = glcontext.get("ARRAY_BUFFER",     i32);
-    gl_STATIC_DRAW      = glcontext.get("STATIC_DRAW",      i32);
-    gl_COLOR_BUFFER_BIT = glcontext.get("COLOR_BUFFER_BIT", i32);
-    gl_TRIANGLES        = glcontext.get("TRIANGLES",        i32);
-
-    gl_VERTEX_SHADER    = glcontext.get("VERTEX_SHADER",    i32);
-    gl_FRAGMENT_SHADER  = glcontext.get("FRAGMENT_SHADER",  i32);
-    gl_COMPILE_STATUS   = glcontext.get("COMPILE_STATUS",   i32);
-    gl_LINK_STATUS      = glcontext.get("LINK_STATUS",      i32);
 }
 
 fn compile_shaders() void {
