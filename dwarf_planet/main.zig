@@ -1,4 +1,4 @@
-// An example of how to render a rainbow triangle in WebGL
+// An example of rendering a texture in WebGL
 // without having to write native .js code using the zjb
 // library. (Using the library makes it possbile to call
 // .js functions from within Zig when needed.)
@@ -7,7 +7,7 @@
 //
 // Build this example with the command:
 //
-//     zig build rainbow_triangle -Doptimize=Fast
+//     zig build dwarf_planet -Doptimize=Fast
 //
 // run in the top directory of the project.
 //
@@ -39,15 +39,26 @@
 // These example and others were developed (almost) entirely
 // on the Twitch channel 10aded; copies of the stream are
 // on YouTube at the @10aded channel.
+//
+// The photo of Pluto below was taken by the New Horizons spacecraft
+// on 14 July 2015 and is in the public domain and available from:
+//
+//     https://commons.wikimedia.org/wiki/File:Pluto-01_Stern_03_Pluto_Color_TXT.jpg
+//
 
 const std = @import("std");
 const zjb = @import("zjb");
+
+const qoi = @import("qoi.zig");
 
 const vertex_shader_source   = @embedFile("vertex_shader.glsl");
 const fragment_shader_source = @embedFile("fragment_shader.glsl");
 
 const CANVAS_WIDTH  : i32 = 500;
 const CANVAS_HEIGHT : i32 = 500;
+
+// Type aliases.
+const Color = @Vector(4, u8);
 
 // Globals
 var glcontext      : zjb.Handle = undefined;
@@ -71,6 +82,16 @@ const gl_LINK_STATUS      : i32 = 0x8B82;
 // Timestamp
 var initial_timestamp      : f64 = undefined;
 
+// Image
+
+// The photo of Pluto below was taken by the New Horizons spacecraft,
+// see the header of this file for more information.
+const pluto_qoi = @embedFile("./pluto_new_horizons.qoi");
+const pluto_header = qoi.comptime_header_parser(pluto_qoi);
+const pluto_width  = pluto_header.image_width;
+const pluto_height = pluto_header.image_height;
+var pluto_pixel_bytes : [pluto_width * pluto_height] Color = undefined;
+
 fn log(v: anytype) void {
     zjb.global("console").call("log", .{v}, void);
 }
@@ -83,6 +104,8 @@ fn logStr(str: []const u8) void {
 
 export fn main() void {
     init_clock();
+
+    decompress_image();
 
     init_webgl_context();
 
@@ -100,6 +123,12 @@ fn init_clock() void {
     defer timeline.release();
     
     initial_timestamp = timeline.get("currentTime", f64);
+}
+
+fn decompress_image() void {
+    qoi.qoi_to_pixels(pluto_qoi, pluto_width * pluto_height, &pluto_pixel_bytes);
+    log(@as(i32, @intCast(pluto_width)));
+    log(@as(i32, @intCast(pluto_height)));
 }
 
 fn init_webgl_context() void {
@@ -152,7 +181,7 @@ fn compile_shaders() void {
     // https://webglfundamentals.org/webgl/lessons/webgl-attributes.html
 
     glcontext.call("bindAttribLocation", .{color_vertex_shader_program, 0, zjb.constString("aPos")}, void);
-    glcontext.call("bindAttribLocation", .{color_vertex_shader_program, 1, zjb.constString("aColor")}, void);
+    glcontext.call("bindAttribLocation", .{color_vertex_shader_program, 1, zjb.constString("aTexCoord")}, void);
 
     glcontext.call("linkProgram",  .{color_vertex_shader_program}, void);
 
@@ -168,13 +197,16 @@ fn compile_shaders() void {
 
 fn setup_array_buffers() void {
     // Define an equilateral RGB triangle.
-    const triangle_gpu_data : [3 * 5] f32 = .{
-        // xpos, ypos,           r, g, b
-         1,    0,                1, 0, 0,
-        -0.5,  0.5 * @sqrt(3.0), 0, 1, 0,
-        -0.5, -0.5 * @sqrt(3.0), 0, 0, 1,
+        const triangle_gpu_data : [6 * 4] f32 = .{
+            // xpos, ypos, xtex, ytex,
+             1,  1,  1, 1,// RT
+            -1,  1,  0, 1,// LT
+             1, -1,  1, 0,// RB
+            -1,  1,  0, 1,// LT
+             1, -1,  1, 0,// RB
+            -1, -1,  0, 0,// LB
     };
-
+    
     const gpu_data_obj = zjb.dataView(&triangle_gpu_data);
     
     // Create a WebGLBuffer, seems similar to making a VBO via gl.genBuffers in pure OpenGL.

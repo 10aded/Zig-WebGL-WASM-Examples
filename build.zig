@@ -23,24 +23,28 @@ pub fn build(b: *std.Build) void {
         .{ .custom = "blinking_screen"  },
         .{ .custom = "looping_fractal"  },
         .{ .custom = "rainbow_triangle" },
+        .{ .custom = "dwarf_planet" },
     };
 
     const static_website_dirs = [_] std.Build.LazyPath {
         b.path("blinking_screen/static"),
         b.path("looping_fractal/static"),
         b.path("rainbow_triangle/static"),
+        b.path("dwarf_planet/static"),
     };
     
     // Create build options for the .wasms
-    const blinking_screen  = b.addExecutable(make_wasm_build_exe_options(b, "blinking_screen", optimize));
-    const looping_fractal  = b.addExecutable(make_wasm_build_exe_options(b, "looping_fractal", optimize));
+    const blinking_screen  = b.addExecutable(make_wasm_build_exe_options(b, "blinking_screen",  optimize));
+    const looping_fractal  = b.addExecutable(make_wasm_build_exe_options(b, "looping_fractal",  optimize));
     const rainbow_triangle = b.addExecutable(make_wasm_build_exe_options(b, "rainbow_triangle", optimize));
+    const dwarf_planet     = b.addExecutable(make_wasm_build_exe_options(b, "dwarf_planet",     optimize));
 
     // Add zjb to the exes, set entry options etc.
     const exe_list = [_] * std.Build.Step.Compile {
         blinking_screen,
         looping_fractal,
         rainbow_triangle,
+        dwarf_planet,
     };
     
     for (exe_list) |exe| {
@@ -65,11 +69,13 @@ pub fn build(b: *std.Build) void {
     const blinking_screen_step  = b.step("blinking_screen",  "Build the blinking_screen example.");
     const looping_fractal_step  = b.step("looping_fractal",  "Build the looping_fractal example.");
     const rainbow_triangle_step = b.step("rainbow_triangle", "Build the rainbow_triangle example.");
+    const dwarf_planet_step     = b.step("dwarf_planet",     "Build the dwarf_planet example.");
 
-    const build_steps : [3] *std.Build.Step= .{
+    const build_steps : [4] *std.Build.Step= .{
         blinking_screen_step,
         looping_fractal_step,
         rainbow_triangle_step,
+        dwarf_planet_step,
     };
 
     for (build_steps, exe_list, output_dirs, generated_js_paths, static_website_dirs) |step, exe, output_dir, js_path, static_website_dir| {
