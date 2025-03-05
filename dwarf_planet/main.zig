@@ -79,6 +79,7 @@ const gl_FRAGMENT_SHADER  : i32 = 0x8B30;
 const gl_COMPILE_STATUS   : i32 = 0x8B81;
 const gl_LINK_STATUS      : i32 = 0x8B82;
 
+const gl_TEXTURE0           : i32 = 0x84C0;
 const gl_TEXTURE_2D         : i32 = 0x0DE1;
 const gl_TEXTURE_WRAP_S     : i32 = 0x2802;
 const gl_TEXTURE_WRAP_T     : i32 = 0x2803;
@@ -102,11 +103,13 @@ var initial_timestamp      : f64 = undefined;
 
 // The photo of Pluto below was taken by the New Horizons spacecraft,
 // see the header of this file for more information.
-const pluto_qoi = @embedFile("./pluto_new_horizons.qoi");
+//const pluto_qoi = @embedFile("./pluto_new_horizons.qoi");
+const pluto_qoi = @embedFile("./RRRB.qoi");
 const pluto_header = qoi.comptime_header_parser(pluto_qoi);
 const pluto_width  = pluto_header.image_width;
 const pluto_height = pluto_header.image_height;
-var pluto_pixel_bytes : [pluto_width * pluto_height] Color = undefined;
+var pluto_pixels : [pluto_width * pluto_height] Color = undefined;
+var pluto_pixel_bytes : [4 * pluto_width * pluto_height] u8 = undefined;
 
 fn log(v: anytype) void {
     zjb.global("console").call("log", .{v}, void);
@@ -142,9 +145,17 @@ fn init_clock() void {
 }
 
 fn decompress_image() void {
-    qoi.qoi_to_pixels(pluto_qoi, pluto_width * pluto_height, &pluto_pixel_bytes);
-    // log(@as(i32, @intCast(pluto_width)));
-    // log(@as(i32, @intCast(pluto_height)));
+    qoi.qoi_to_pixels(pluto_qoi, pluto_width * pluto_height, &pluto_pixels);
+    // @temp, @test...
+    // The wasm may treat [] Vector(4, u8) differently to a [] u8...
+    // so make a [] u8 instead!
+
+    for (pluto_pixels, 0..) |pixel, i| {
+        pluto_pixel_bytes[4 * i + 0] = pixel[0];
+        pluto_pixel_bytes[4 * i + 1] = pixel[1];
+        pluto_pixel_bytes[4 * i + 2] = pixel[2];
+        pluto_pixel_bytes[4 * i + 3] = pixel[3];
+    }
 }
 
 fn init_webgl_context() void {
@@ -217,12 +228,18 @@ fn setup_array_buffers() void {
     // Define an equilateral RGB triangle.
         const triangle_gpu_data : [6 * 4] f32 = .{
             // xpos, ypos, xtex, ytex,
-             1,  1,  480, 480,// RT
-            -1,  1,  0, 480,// LT
-             1, -1,  480, 0,// RB
-            -1,  1,  0, 480,// LT
-             1, -1,  480, 0,// RB
+             1,  1,  1, 1,// RT
+            -1,  1,  0, 1,// LT
+             1, -1,  1, 0,// RB
+            -1,  1,  0, 1,// LT
+             1, -1,  1, 0,// RB
             -1, -1,  0, 0,// LB
+            // 1,  1,  480, 480,// RT
+            // -1,  1,  0, 480,// LT
+            // 1, -1,  480, 0,// RB
+            // -1,  1,  0, 480,// LT
+            // 1, -1,  480, 0,// RB
+            // -1, -1,  0, 0,// LB
     };
     
     const gpu_data_obj = zjb.dataView(&triangle_gpu_data);
@@ -270,10 +287,15 @@ fn setup_array_buffers() void {
     const bm_width  : i32 = @intCast(pluto_width);
     const bm_height : i32 = @intCast(pluto_height);
 
-    const pixel_data_obj = zjb.dataView(&pluto_pixel_bytes);
+    // THIS LINE (seems) to cause a fail:
+    // const pixel_data_obj = zjb.dataView(&pluto_pixel_bytes);
+
+    const pixel_data_obj = zjb.u8ArrayView(&pluto_pixel_bytes);
+    
+    // log(@as(i32, @intCast(pluto_pixel_bytes[0]))); //@debug
     glcontext.call("texImage2D", .{gl_TEXTURE_2D, 0, gl_RGBA, bm_width, bm_height, 0, gl_RGBA, gl_UNSIGNED_BYTE, pixel_data_obj}, void);
     
-    //    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, bm_width, bm_height, 0, gl.RGBA, gl.UNSIGNED_BYTE, &pluto_pixel_bytes[0]);
+    //    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, bm_width, bm_height, 0, gl.RGBA, gl.UNSIGNED_BYTE, &pluto_pixels[0]);
 }
 
 fn animationFrame(timestamp: f64) callconv(.C) void {
@@ -285,13 +307,32 @@ fn animationFrame(timestamp: f64) callconv(.C) void {
     glcontext.call("clearColor", .{0.2, 0.2, 0.2, 1}, void);
     glcontext.call("clear",      .{gl_COLOR_BUFFER_BIT}, void);
 
-    // Render the rainbow triangle.
+    // Render the image of pluto!
     glcontext.call("useProgram", .{texture_shader_program}, void);
 
     // Set the time uniform in the fragment shader.
     const time_seconds_f32 : f32 = @floatCast(time_seconds);
-    const time_uniform_location = glcontext.call("getUniformLocation", .{texture_shader_program, zjb.constString("time")}, zjb.Handle);
-    glcontext.call("uniform1f", .{time_uniform_location, time_seconds_f32}, void);
+    _ = time_seconds_f32;
+    
+    //    const time_uniform_location = glcontext.call("getUniformLocation", .{texture_shader_program, zjb.constString("time")}, zjb.Handle);
+
+
+    
+    //glcontext.call("uniform1f", .{time_uniform_location, time_seconds_f32}, void);
+
+
+    // Make the blue_marble texture active.
+    glcontext.call("activeTexture", .{gl_TEXTURE0}, void);
+    //    gl.activeTexture(gl.TEXTURE0);
+
+    glcontext.call("bindTexture", .{gl_TEXTURE_2D, pluto_texture}, void);
+//    gl.bindTexture(gl.TEXTURE_2D, blue_marble_texture);
+
+    const uSampler_location = glcontext.call("getUniformLocation", .{texture_shader_program, zjb.constString("uSampler")}, zjb.Handle);
+//    const texture0_location = gl.getUniformLocation(texture_shader_program, "uSampler");
+
+    glcontext.call("uniform1i", .{uSampler_location, 0}, void);
+    //    gl.uniform1i(texture0_location, 0);
     
     // The Actual Drawing command!
     glcontext.call("drawArrays", .{gl_TRIANGLES, 0, 6}, void);
