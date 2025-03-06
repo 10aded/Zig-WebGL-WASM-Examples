@@ -24,13 +24,13 @@ To build the fractal example below, first call `zig build looping_fractal -Dopti
 
 A rectangle oscillates between pink and blue.
 
-![Screenshot](./Gifs-Readme/blinking_screen.gif "A browser windows displays a rectangle that oscillates between pink and blue.")
+<img src="./Gifs-Readme/blinking_screen.gif" width="300" title="A browser windows displays a rectangle that oscillates between pink and blue.">
 
 ## [Looping Fractal](./looping_fractal)
 
 A continuous (kinda) series of Julia sets are rendered in a loop.
 
-![Screenshot](./Gifs-Readme/looping_fractal.gif "A browser windows displays a series Julia sets, a type of fractals, that sprial and gradually change color over time.")
+<img src="./Gifs-Readme/looping_fractal.gif" width="300" title="A browser windows displays a series Julia sets, a type of fractals, that sprial and gradually change color over time.">
 
 ## [Rainbow Triangle](./rainbow_triangle)
 
@@ -38,9 +38,8 @@ A rainbow triangle rotates over time.
 
 <img src="./Gifs-Readme/rainbow_triangle.gif" width="300" title="A browser windows displays a rainbow triangle that rotates over time.">
 
-
 ## [Dwarf Planet](./dwarf_planet)
 
 The New Horizons photo of 134340 Pluto changes between color and grayscale.
 
-![Screenshot](./Gifs-Readme/dwarf_planet.gif "A browser windows displays a photo of Pluto that changes between color and grayscale.")
+<img src="./Gifs-Readme/dwarf_planet.gif" width="300" title="A browser windows displays a photo of Pluto that changes between color and grayscale.">
