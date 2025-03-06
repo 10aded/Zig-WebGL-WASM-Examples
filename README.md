@@ -40,6 +40,6 @@ A rainbow triangle rotates over time.
 
 ## [Dwarf Planet](./dwarf_planet)
 
-The New Horizons photo of 134340 Pluto changes between color and grayscale.
+The [New Horizons photo of 134340 Pluto](https://commons.wikimedia.org/wiki/File:Pluto-01_Stern_03_Pluto_Color_TXT.jpg) changes between color and grayscale.
 
 <img src="./Gifs-Readme/dwarf_planet.gif" width="300" title="A browser windows displays a photo of Pluto that changes between color and grayscale.">
