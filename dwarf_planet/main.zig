@@ -117,6 +117,10 @@ const pluto_height = pluto_header.image_height;
 // It would be EASY to modify the qoi decompressor to directly
 // convert it to [] u8 but this is what we're doing for now!
 
+// NOTE: As of Zig 0.13.0, upon trying to @ptrCast([] Vec(4, u8)) to
+// [] u8 ... if this is even sensible to begin with... we get a
+// TODO: implement @ptrCast between slices changing the length compile error.
+
 var pluto_pixels : [pluto_width * pluto_height] Color = undefined;
 var pluto_pixel_bytes : [4 * pluto_width * pluto_height] u8 = undefined;
 
@@ -300,36 +304,27 @@ fn animationFrame(timestamp: f64) callconv(.C) void {
     glcontext.call("clearColor", .{0.2, 0.2, 0.2, 1}, void);
     glcontext.call("clear",      .{gl_COLOR_BUFFER_BIT}, void);
 
-    // Render the image of pluto!
+    // Render the photo!
     glcontext.call("useProgram", .{texture_shader_program}, void);
 
-    // Set the time uniform in the fragment shader.
+    // Let the lambda uniform, which adjusts how gray the image is.    
     const time_seconds_f32 : f32 = @floatCast(time_seconds);
-
-    // Instead of just using a trig function for the oscillation, put it through f(x) = x^2.
     const speed = 4;
     const osc : f32 = 0.5 * (1 + @sin(speed * time_seconds_f32));
     const lambda = osc * osc;
 
     const lambda_uniform_location = glcontext.call("getUniformLocation", .{texture_shader_program, zjb.constString("lambda")}, zjb.Handle);
 
-    
     glcontext.call("uniform1f", .{lambda_uniform_location, lambda}, void);
 
-    // Make the blue_marble texture active.
+    // Make the GPU use the pluto texture.
     glcontext.call("activeTexture", .{gl_TEXTURE0}, void);
-    //    gl.activeTexture(gl.TEXTURE0);
-
     glcontext.call("bindTexture", .{gl_TEXTURE_2D, pluto_texture}, void);
-//    gl.bindTexture(gl.TEXTURE_2D, blue_marble_texture);
 
-    const uSampler_location = glcontext.call("getUniformLocation", .{texture_shader_program, zjb.constString("uSampler")}, zjb.Handle);
-//    const texture0_location = gl.getUniformLocation(texture_shader_program, "uSampler");
-
-    glcontext.call("uniform1i", .{uSampler_location, 0}, void);
-    //    gl.uniform1i(texture0_location, 0);
+    const pluto_texture_location = glcontext.call("getUniformLocation", .{texture_shader_program, zjb.constString("pluto_texture")}, zjb.Handle);
+    glcontext.call("uniform1i", .{pluto_texture_location, 0}, void);
     
-    // The Actual Drawing command!
+    // Draw the dwarf planet!
     glcontext.call("drawArrays", .{gl_TRIANGLES, 0, 6}, void);
 
     zjb.ConstHandle.global.call("requestAnimationFrame", .{zjb.fnHandle("animationFrame", animationFrame)}, void);
