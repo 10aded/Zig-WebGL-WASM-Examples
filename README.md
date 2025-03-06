@@ -12,6 +12,7 @@ To compile a project, simply run `zig build <PROJECT> -Doptimize=ReleaseFast` wh
 - `blinking_screen`
 - `looping_fractal`
 - `rainbow_triangle`
+- `dwarf_planet`
 
 and `zig` is the Zig `0.13.0` compiler, freely available at: https://ziglang.org/download/
 
@@ -37,3 +38,8 @@ A rainbow triangle rotates over time.
 
 ![Screenshot](./Gifs-Readme/rainbow_triangle.gif "A browser windows displays a rainbow triangle that rotates over time.")
 
+## [Dwarf Planet](./dwarf_planet)
+
+The New Horizons photo of 134340 Pluto changes between color and grayscale.
+
+![Screenshot](./Gifs-Readme/dwarf_planet.gif "A browser windows displays a photo of Pluto that changes between color and grayscale.")
