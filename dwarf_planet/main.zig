@@ -51,11 +51,13 @@ const zjb = @import("zjb");
 
 const qoi = @import("qoi.zig");
 
+const PI = std.math.pi;
+
 const vertex_shader_source   = @embedFile("vertex_shader.glsl");
 const fragment_shader_source = @embedFile("fragment_shader.glsl");
 
-const CANVAS_WIDTH  : i32 = 500;
-const CANVAS_HEIGHT : i32 = 500;
+const CANVAS_WIDTH  : i32 = 480; // The photo of 134340 Pluto is 480 x 480.
+const CANVAS_HEIGHT : i32 = 480;
 
 // Type aliases.
 const Color = @Vector(4, u8);
@@ -303,14 +305,16 @@ fn animationFrame(timestamp: f64) callconv(.C) void {
 
     // Set the time uniform in the fragment shader.
     const time_seconds_f32 : f32 = @floatCast(time_seconds);
-    _ = time_seconds_f32;
+
+    // Instead of just using a trig function for the oscillation, put it through f(x) = x^2.
+    const speed = 4;
+    const osc : f32 = 0.5 * (1 + @sin(speed * time_seconds_f32));
+    const lambda = osc * osc;
+
+    const lambda_uniform_location = glcontext.call("getUniformLocation", .{texture_shader_program, zjb.constString("lambda")}, zjb.Handle);
+
     
-    //    const time_uniform_location = glcontext.call("getUniformLocation", .{texture_shader_program, zjb.constString("time")}, zjb.Handle);
-
-
-    
-    //glcontext.call("uniform1f", .{time_uniform_location, time_seconds_f32}, void);
-
+    glcontext.call("uniform1f", .{lambda_uniform_location, lambda}, void);
 
     // Make the blue_marble texture active.
     glcontext.call("activeTexture", .{gl_TEXTURE0}, void);

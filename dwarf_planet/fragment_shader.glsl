@@ -6,16 +6,14 @@ precision lowp float;
 
 varying lowp vec2 TexCoord;
 
+uniform float lambda;
+
 uniform sampler2D uSampler;
-
-
-const float lambda = 1.0;
 
 mat3 lambda_to_matrix(float l) {
     float norm = 1.0 / (1.0 + 2.0 * l);
     return norm * mat3(1, l, l, l, 1, l, l, l, 1);
 }
-
 
 void main() {
   mat3 lmat = lambda_to_matrix(lambda);
