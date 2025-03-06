@@ -36,7 +36,8 @@ A continuous (kinda) series of Julia sets are rendered in a loop.
 
 A rainbow triangle rotates over time.
 
-<img src="./Gifs-Readme/rainbow_triangle.gif" width="300">
+<img src="./Gifs-Readme/rainbow_triangle.gif" width="300" title="A browser windows displays a rainbow triangle that rotates over time.">
+
 
 ## [Dwarf Planet](./dwarf_planet)
 
